@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'		=> 'Text::Document',
-    'VERSION_FROM'	=> 'Document.pm', # finds $VERSION
+    'VERSION'		=> '1.07',
     'PREREQ_PM'		=> {
     	Bit::Vector => 6.0,
 	FileHandle => 2.00,

@@ -27,7 +27,9 @@ BEGIN {
 
 	%Text::Bloom::Radix = ();
 	@Text::Bloom::RadixDomain = ();
-	$Text::Bloom::p = 4294967291;
+# previous value was too large for some linux boxes
+#	$Text::Bloom::p = 4294967291;
+	$Text::Bloom::p = 499979;
 	%Text::Bloom::config = (
 		d	=> 4,
 		size 	=> 65536*2,
@@ -585,3 +587,5 @@ but without any evidence.
 =head1 HISTORY
 
   2001-11-02 - initial revision
+
+  2002-02-04 - reduced prime p to pacify some linux boxes

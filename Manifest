@@ -8,7 +8,6 @@ DocumentCollection.pod
 Makefile.PL
 Manifest
 t/bloom.t
-t/collection.db
 t/collection.t
 t/docsimil.t
 t/document.t

@@ -1,7 +1,7 @@
 
 package Text::Document;
 
-$Text::Document::VERSION = '1.04';
+$Text::Document::VERSION = '1.05';
 
 use strict;
 
@@ -127,6 +127,12 @@ sub CommonTermsRatio
 	return scalar(@intersection) /  $unionCardinality;
 }
 
+sub PureASCII
+{
+	my $self = shift;
+	$self->{compress} = 1;
+}
+
 sub WriteToString
 {
 	my $self = shift;
@@ -153,8 +159,8 @@ sub WriteToString
 
 	my $str = $header . $block;
 
-# add 4-byte checksum at the end of data
-	return $str . pack( 'N', unpack( '%32C*', $str ) );
+# add 8-char hex-encoded 4-byte checksum at the end of data
+	return $str . sprintf( '%08x', unpack( '%32C*', $str ) );
 }
 
 sub NewFromString
@@ -164,12 +170,18 @@ sub NewFromString
 	my $self = {};
 
 # verify checksum
-	my $stored_checksum = substr( $str, -4 );
-	$stored_checksum = unpack( 'N', $stored_checksum );
-	$str = substr( $str, 0, -4 );
-	my $computed_checksum = unpack( '%32C*', $str );
+# try to be compatible with version 1.03
+	my $stored_checksum = unpack( 'N', substr( $str, -4 ));
+	my $data_payload = substr( $str, 0, -4 );
+	my $computed_checksum = unpack( '%32C*', $data_payload );
 
-	if( $stored_checksum ne $computed_checksum ){
+	if( $stored_checksum != $computed_checksum ){
+		$stored_checksum = hex( substr( $str, -8 ));
+		$data_payload = substr( $str, 0, -8 );
+		$computed_checksum = unpack( '%32C*', $data_payload );
+	}
+
+	if( $stored_checksum != $computed_checksum ){
 		die( __PACKAGE__ . '::NewFromString : '
 			. 'checksum test failed '
 			. $stored_checksum
@@ -179,7 +191,7 @@ sub NewFromString
 	}
 
 # split data in header and block
-	my ($header,$block) = split( /\n/, $str, 2 );
+	my ($header,$block) = split( /\n/, $data_payload, 2 );
 
 # parse header line
 	my %header = split( /[ 	=]+/, $header );
@@ -476,6 +488,14 @@ compress the bit vector in the most efficient way.
 On systems without C<Compress::Zlib>, the bit string is
 saved uncompressed.
 
+This method is influenced by C<PureASCII>.
+
+=head2 PureASCII
+
+Ensure that the representation in WriteToString does not contain
+characters with ASCII code >= 128. Needed to easily include document
+representations into textual databases (e.g. XML files).
+
 =head2 JaccardSimilarity
 
 Compute the Jaccard measure of document similarity, which is defined
@@ -583,6 +603,8 @@ detail is not necessary here.
   2001-11-02 - initial revision
 
   2001-11-20 - added WeightedCosineSimilarity, suggested by JP Mc Gowan <jp.mcgowan@ucd.ie>
+
+  2002-02-03 - changed representation of checksum. New method C<PureASCII>.
 
 =head DISCARDED CHOICES
 
